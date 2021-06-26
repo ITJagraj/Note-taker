@@ -2,6 +2,7 @@ const express = require("express");
 const fs = require("fs");
 const path = require('path');
 const util = require('util');
+const { v4: uuidv4 } = require('uuid');
 
 //Initialize express app
 const app = express();
@@ -30,38 +31,35 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "./public/index.html"));
 });
 app.get("/api/notes", (req, res) => {
-    readFileSync(path.join(__dirname, "./db/db.json"), "utf8")
+    readFileSync("./db/db.json", "utf8")
         .then((data) => {
             return res.json(JSON.parse(data));
         });
 });
 
 app.post("/api/notes", (req, res) => {
-    const newNote = req.body;
-    readFileSync(path.join(__dirname, "./db/db.json"), "utf8")
+    const {title, text} = req.body;
+    const newNote = {title, text, id:uuidv4()}
+    readFileSync("./db/db.json", "utf8")
         .then((data) => {
             allNotes = JSON.parse(data);
-            if (newNote.id || newNote.id === 0) {
-                let currNote = allNotes[newNote.id];
-                currNote.title = newNote.title;
-                currNote.text = newNote.text;
-            } else {
-                allNotes.push(newNote);
-            }
-            writeFileSync(path.join(__dirname, "./db/db.json"), JSON.stringify(allNotes))
-                .then(() => {
+            // console.log(allNotes);
+            allNotes.push(newNote);
+            writeFileSync("./db/db.json", JSON.stringify(allNotes))
+                .then((note) => {
                     console.log("write db.json file");
+                    return res.json(note)
                 })
         });
 });
 //delete requests 
 app.delete("/api/notes/:id", (req, res) => {
     const id = req.params.id;
-    readFileSync(path.join(__dirname, "./db/db.json"), "utf8")
+    readFileSync("./db/db.json", "utf8")
         .then((data) => {
             allNotes = JSON.parse(data);
             allNotes.splice(id, 1);
-            writeFileSync(path.join(__dirname, "./db/db.json"), JSON.stringify(allNotes))
+            writeFileSync("./db/db.json", JSON.stringify(allNotes))
                 .then(() => {
                     console.log("delete db.json file");
                 })
